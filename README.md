@@ -4,3 +4,8 @@ Perl On Windows is using the particular version of MingGW gcc compiler,
 which throwing the compilation error for sqlext.h whcih is bunlded in
 our CLI Driver. Hence uploading the precompiled DBD::DB2 dll's.
 
+
+
+## pre-requisites
+
+  The minimum perl version supported by driver is perl 5.8 and the latest version supported is perl 5.30.
