@@ -4,6 +4,10 @@ DBD::DB2::Changes - List of changes
 
 =cut
 
+=head2 Changes in DBD::DB2 1.89, May 26, 2021
+
+  Fix building with DBI installed in local::lib and some test cases fixed. Tested on 5.18 and above.
+
 =head2 Changes in DBD::DB2 1.88, May 21, 2021
 
   README file changes. Tested on 5.18 and above.
