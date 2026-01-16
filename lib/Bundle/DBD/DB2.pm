@@ -1,6 +1,6 @@
 package Bundle::DBD::DB2;
 
-$VERSION = '1.88';
+$VERSION = '1.92';
 
 1;
 
