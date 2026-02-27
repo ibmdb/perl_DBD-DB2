@@ -1,163 +1,246 @@
 # perl_DBD-DB2
-Repository for DBD::DB2 perl.
-dlls for ActivePerl and Strawberry Perl i.e. 
-Perl On Windows is using the particular version of MingGW gcc compiler,
-which is throwing the compilation error for sqlext.h which is bundled
-in our CLI Driver. Hence uploading the precompiled DBD::DB2 dll's in "Windows_Binary" folder.
 
+[![CPAN Version](https://img.shields.io/cpan/v/DBD-DB2.svg?style=flat-square)](https://metacpan.org/pod/DBD::DB2)
+[![Perl Version](https://img.shields.io/badge/perl-5.8%2B-blue.svg?style=flat-square)](https://www.perl.org/)
+[![License](https://img.shields.io/badge/license-Perl%20Artistic-green.svg?style=flat-square)](LICENSE)
+[![GitHub](https://img.shields.io/badge/github-ibmdb%2Fperl_DBD--DB2-blue.svg?style=flat-square)](https://github.com/ibmdb/perl_DBD-DB2)
+[![Build Status](https://img.shields.io/badge/status-maintained-brightgreen.svg?style=flat-square)](https://github.com/ibmdb/perl_DBD-DB2)
 
+Perl database interface for **IBM DB2 for z/OS**, **DB2 for Linux/Unix/Windows (LUW)**, and **DB2 for i (AS/400)**.
 
-## Pre-requisites
+DBD::DB2 enables Perl applications to connect to, query, and interact with IBM DB2 databases. This repository provides both source code and pre-compiled Windows binaries (DLLs for ActivePerl and Strawberry Perl) to simplify installation and avoid compilation issues with the DB2 CLI Driver.
 
-  The minimum perl version supported by driver is perl 5.8 and the latest version supported is perl 5.40.
+## Quick Start
 
-*** *BEFORE* BUILDING, TESTING AND INSTALLING this you will need to:
+> **Windows Users (Easiest):** Use pre-compiled binaries from the `Windows_Binary` folder  
+> **CPAN Users:** Run `cpanm install DBD::DB2`  
+> **Developers:** Build from source (see [Installation](#installation) section)
 
-    Build, test and install Perl 5 (Preferrably 5.006_00 or later)
-    It is very important to TEST it and INSTALL it!
+## Prerequisite
 
-    Build, test and install the DBI module (at least DBI 1.21).
-    It is very important to TEST it and INSTALL it!
+> **Perl** version 5.8 or later (tested up to 5.40)
+> Confirm by typing in command prompt:
+```
+perl -v
+```
 
-    Remember to *read* the DBI README file and this one CAREFULLY!
+> **DBI Module** version 1.21 or later (Perl Database Interface)
+> Install with:
+```
+cpanm install DBI
+```
 
-    Ensure the following DB2 product is installed.
+> **IBM DB2 Application Development Client** version 7.2 or later
+> - Included with DB2 Personal Developer's Edition and DB2 Universal Developer's Edition
+> - Download from [IBM DB2 Support](http://www.ibm.com/software/data/db2/udb/support/)
 
-        DB2 Application Development Client v7.2 or later
-            Included with the DB2 Personal Developer's Edition and the
-            DB2 Universal Developer's Edition
+## Installation
 
-    The Application Development Client can be downloaded here:
+### Windows - Using Pre-Compiled Binaries (Recommended for Beginners)
 
-    http://www.ibm.com/software/data/db2/udb/support/
-	GIT REPO: https://github.com/ibmdb/perl_DBD-DB2
+> Pre-compiled DBD::DB2 DLLs are provided in the `Windows_Binary` folder to avoid compilation issues with the CLI Driver.
 
+#### Steps:
 
+1. **Locate your Perl installation:**
+   ```cmd
+   perl -v
+   ```
 
-*** BUILDING On UNIX(Tested on RHEL 10):
+2. **Download the appropriate binary from `Windows_Binary` folder:**
+   - Choose folder matching your Perl distribution (ActivePerl or Strawberry Perl)
+   - Select version matching your Perl version
 
-	export DB2_HOME=<path to CLI DRIVER installation>/clidriver
-	export PERL5LIB=~/lib/perl5/lib/perl5/site_perl:$HOME/DBD-DB2-<latest_version>/tests:$HOME/DBD-DB2-<latest_version>/Constants
-	
-    perl Makefile.PL            # use a perl that's in your PATH
-    make
-    make test
-    make install (if the tests look okay)
-	
-	NOTE: 
-	For non root installation specify the installation into ~/lib/perl5 instead for non-root installation:
+3. **Copy files to Perl library directory:**
+   ```cmd
+   copy DB2.dll "C:\Perl\site\lib\auto\DBD\DB2\"
+   copy DB2.pm  "C:\Perl\site\lib\DBD\"
+   ```
+   *(Adjust path based on your Perl installation)*
 
-	perl Makefile.PL PREFIX=~/lib/perl5
-	make
-	make test
-	make install
-	
-	On Windows:
+4. **Verify installation:**
+   ```perl
+   perl -e "use DBD::DB2; print qq{Success\n};"
+   ```
 
-    perl Makefile.PL
-    nmake
-    nmake test
-    nmake install
-	
-*** BUILDING on AIX(tested on 1.86)
+### Windows - Building from Source
 
-	Installation instruction for DBD::DB2 on AIX, with Perl 5.28.1:
+> **Prerequisites:** MSVC or MinGW C++ Compiler must be installed
 
-	NOTE: I started with perl.rte 5.28.1.2 which was in 7200 TL4 SP2. I am using xlccmp.13.1.3 compiler.
+1. Navigate to the repository directory:
+   ```cmd
+   cd path\to\perl_DBD-DB2
+   ```
 
-	1)  UNPACK REQUIRED FILES
+2. Run build commands:
+   ```cmd
+   perl Makefile.PL
+   nmake
+   nmake test
+   nmake install
+   ```
 
-	Unpacked the following to /tmp/perl
+### Linux/Unix
 
-	v10.5fp11_aix64_odbc_cli_32.tar
-	DBI DBI-1.643.tar
-	DBD-DB2-1.86.tar
+1. **Set environment variables:**
+   ```bash
+   export DB2_HOME=<path-to-DB2-CLI-driver>/clidriver
+   export PERL5LIB=~/lib/perl5:$DB2_HOME/perl:$HOME/DBD-DB2-<version>/tests:$HOME/DBD-DB2-<version>/Constants
+   ```
 
-	2) BUILD AND INSTALL DBI:
+2. **Build and install:**
+   ```bash
+   perl Makefile.PL
+   make
+   make test
+   make install
+   ```
 
-	cd /tmp/perl/DBI-1.643
+#### For Non-Root Installation (Recommended):
 
-	perl Makefile.PL
-	make
-	make test 
-	make install 
+```bash
+perl Makefile.PL PREFIX=~/lib/perl5
+make
+make test
+make install
+```
 
-	 
-	3) BUILD AND INSTALL DBD::DB2
+### AIX
 
-	cd  /tmp/perl/DBD-DB2-<latest_version>
+> **Prerequisites:** Perl 5.8+, DB2 CLI v10.5+, xlccmp 13.1.3+
 
-	export DB2_HOME=/tmp/perl/odbc_cli_32/clidriver
-	export PERL5LIB=/usr/opt/perl5/lib/site_perl/5.28.1/aix-thread-multi/:/tmp/perl/DBD/DBD-DB2-<latest_version>/tests:/tmp/perl/DBD/DBD-DB2-<latest_version>/Constants
+1. **Extract required files to `/tmp/perl`:**
+   ```bash
+   mkdir -p /tmp/perl
+   cd /tmp/perl
+   # Extract: v10.5fp11_aix64_odbc_cli_32.tar, DBI-1.643.tar, DBD-DB2-<version>.tar
+   ```
 
-*** TESTING:
-	Set the DB2_USER & DB2_PASSWD as env variable. If the same is not set, it will be picked from connection.pl
-    All Platforms:
-    Edit the file connection.pl in the folder tests so that it looks like the following:
+2. **Install DBI module:**
+   ```bash
+   cd DBI-1.643
+   perl Makefile.PL
+   make
+   make test
+   make install
+   ```
 
-    $USERID="userid";
-    $PASSWORD="password";
-    $PORT=50000;
-    $HOSTNAME="localhost";
-    $DATABASE="database";
-    $PROTOCOL="TCPIP";
+3. **Install DBD::DB2:**
+   ```bash
+   cd ../DBD-DB2-<version>
+   export DB2_HOME=/tmp/perl/odbc_cli_32/clidriver
+   export PERL5LIB=/usr/opt/perl5/lib/site_perl/5.28.1/aix-thread-multi:$DB2_HOME/perl:$(pwd)/tests:$(pwd)/Constants
+   
+   perl Makefile.PL
+   make
+   make test
+   make install
+   ```
 
-    The next section has details about the trusted context user. If you dont have trusted users set specifically, then you may leave this section as is and the testcase for the trusted context would fail. This is an expected behavior.
+## Testing Your Installation
 
-    The details for fakeport etc can be left untouched.
+> Set `DB2_USER` and `DB2_PASSWD` as environment variables. Configuration can also be provided in `tests/connection.pl`.
 
-    Run the test suite by running the following command:
-    $ perl run-tests.pl
+### With Connection Configuration:
 
-*** IF YOU HAVE PROBLEMS:
+1. **Edit `tests/connection.pl`:**
+   ```perl
+   $USERID="your_db2_username";
+   $PASSWORD="your_db2_password";
+   $PORT=50000;
+   $HOSTNAME="your_db_server";
+   $DATABASE="your_database_name";
+   $PROTOCOL="TCPIP";
+   ```
 
-    Please read the CAVEATS files which includes important
-    information, including tips and workarounds for various
-    platform-specific problems.
+2. **Run test suite:**
+   ```bash
+   perl run-tests.pl
+   ```
 
+### Quick Manual Test:
 
-*** SUPPORT INFORMATION:
+Create `test_db2.pl`:
+```perl
+#!/usr/bin/perl
+use strict;
+use warnings;
+use DBI;
 
-    Technical support for the DBD::DB2 driver is provided by IBM through
-    its service agreements for DB2 UDB.  Information on DB2 UDB service
-    agreements and support can be found on the Web at
+my $dbh = DBI->connect('dbi:DB2:database=SAMPLE', 'userid', 'password')
+    or die "Connection failed: $DBI::errstr";
 
-        http://www.software.ibm.com/data/db2/db2tech
+print "Connected successfully!\n";
 
-    For other DBD::DB2 information, please see
+my $sth = $dbh->prepare("SELECT * FROM SYSCAT.TABLES FETCH FIRST 5 ROWS ONLY");
+$sth->execute() or die "Query failed: $DBI::errstr";
 
-        http://www.software.ibm.com/data/db2/perl
+while (my $row = $sth->fetchrow_hashref()) {
+    print "Table: ", $row->{TABNAME}, "\n";
+}
 
-    For documentation about DB2 and CLI, please see:
+$sth->finish();
+$dbh->disconnect();
+```
 
-        http://publib.boulder.ibm.com/infocenter/db2help/index.jsp
+Run with:
+```bash
+perl test_db2.pl
+```
 
-    Comments/suggestions/enhancement requests may be raised at
+## Troubleshooting
 
-        Github Repo(https://github.com/ibmdb/perl_DBD-DB2)
+| Issue | Solution |
+|-------|----------|
+| "Can't find module DBD::DB2" | Ensure DBI is installed first: `cpanm install DBI` |
+| "DB2_HOME not set" | Set environment variable pointing to DB2 CLI driver installation |
+| Compilation errors with sqlext.h | Use pre-compiled Windows binaries instead of building from source |
+| Permission denied during install | Run with `sudo` or use `PREFIX=~/lib/perl5` for user-level installation |
+| Test connection fails | Verify credentials in `tests/connection.pl` and ensure DB2 server is running |
 
-    Please see the following files for more information:
-        CAVEATS - important build/usage information
-        DB2.pod - an example perl script
-                - an explanation of attribute hashes
+#### For More Information:
 
-*** MAILING LISTS
+- **CAVEATS** - Platform-specific solutions and workarounds
+- **TESTING_GUIDE.md** - Comprehensive testing procedures
+- **TEST_GAP_ANALYSIS.md** - Test coverage details
 
-    As a user or maintainer of a local copy of DBD::DB2, you need
-    to be aware of the following addresses:
+## Support & Resources
 
-    The DBI mailing lists located at
+### IBM Support
+- **Technical Support:** IBM DB2 service agreements
+- **DB2 Documentation:** [IBM DB2 Info Center](http://publib.boulder.ibm.com/infocenter/db2help/index.jsp)
+- **DB2 Perl Resources:** [IBM DB2 Perl Page](http://www.software.ibm.com/data/db2/perl)
 
-        dbi-announce@perl.org          for announcements
-        dbi-dev@perl.org               for developer/maintainer discussions
-        dbi-users@perl.org             for end user level discussion and help
+### Community - DBI Mailing Lists
 
-    To subscribe or unsubscribe to each individual list please see
+| List | Purpose |
+|------|---------|
+| dbi-announce@perl.org | Announcements |
+| dbi-dev@perl.org | Developer discussions |
+| dbi-users@perl.org | User help & questions |
 
-        http://lists.perl.org/
+**Subscribe:** Send email to `<listname>-subscribe@perl.org` or visit [lists.perl.org](http://lists.perl.org/)
 
-    or send an empty email to the following addresses
+### GitHub Repository
+- **Project:** [GitHub: perl_DBD-DB2](https://github.com/ibmdb/perl_DBD-DB2)
+- **Report Issues:** Use GitHub Issues feature
 
-        dbi-announce-subscribe@perl.org
-        dbi-dev-subscribe@perl.org
-        dbi-users-subscribe@perl.org
+## Documentation
+
+| File | Content |
+|------|---------|
+| CAVEATS | Important platform-specific information and workarounds |
+| DB2.pod | Example Perl scripts for using DBD::DB2 |
+| TESTING_GUIDE.md | Comprehensive testing procedures and guidelines |
+| TEST_GAP_ANALYSIS.md | Test coverage details and limitations |
+| MISSING_TEST_CASES.md | Scenarios not yet covered by tests |
+
+## License
+
+See [LICENSE](LICENSE) file for details.
+
+---
+
+**Last Updated:** February 2026
+
+For latest information, visit: [GitHub Repository](https://github.com/ibmdb/perl_DBD-DB2)
