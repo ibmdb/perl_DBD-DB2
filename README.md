@@ -231,9 +231,6 @@ perl test_db2.pl
 |------|---------|
 | CAVEATS | Important platform-specific information and workarounds |
 | DB2.pod | Example Perl scripts for using DBD::DB2 |
-| TESTING_GUIDE.md | Comprehensive testing procedures and guidelines |
-| TEST_GAP_ANALYSIS.md | Test coverage details and limitations |
-| MISSING_TEST_CASES.md | Scenarios not yet covered by tests |
 
 ## License
 
