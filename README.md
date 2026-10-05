@@ -2,7 +2,7 @@
 
 [![CPAN Version](https://img.shields.io/cpan/v/DBD-DB2.svg?style=flat-square)](https://metacpan.org/pod/DBD::DB2)
 [![Perl Version](https://img.shields.io/badge/perl-5.8%2B-blue.svg?style=flat-square)](https://www.perl.org/)
-[![License](https://img.shields.io/badge/license-Perl%20Artistic-green.svg?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
 [![GitHub](https://img.shields.io/badge/github-ibmdb%2Fperl_DBD--DB2-blue.svg?style=flat-square)](https://github.com/ibmdb/perl_DBD-DB2)
 [![Build Status](https://img.shields.io/badge/status-maintained-brightgreen.svg?style=flat-square)](https://github.com/ibmdb/perl_DBD-DB2)
 
@@ -231,13 +231,12 @@ perl test_db2.pl
 |------|---------|
 | CAVEATS | Important platform-specific information and workarounds |
 | DB2.pod | Example Perl scripts for using DBD::DB2 |
-| TESTING_GUIDE.md | Comprehensive testing procedures and guidelines |
-| TEST_GAP_ANALYSIS.md | Test coverage details and limitations |
-| MISSING_TEST_CASES.md | Scenarios not yet covered by tests |
 
 ## License
 
-See [LICENSE](LICENSE) file for details.
+DBD::DB2 is licensed under the [MIT License](LICENSE). Third-party components
+retain their respective licenses, and Db2 client libraries are subject to their
+own license terms.
 
 ---
 
