@@ -3,6 +3,7 @@
 name:         DBD-DB2
 version:      1.93
 version_from: DB2.pm
+license:      mit
 installdirs:  site
 requires:
 
