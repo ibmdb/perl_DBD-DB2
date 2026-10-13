@@ -52,8 +52,6 @@ disconnect_all(drh)
         sv_setiv(DBIc_ERR(imp_drh), (IV)1);
         sv_setpv(DBIc_ERRSTR(imp_drh),
                 (char*)"disconnect_all not implemented");
-        DBIh_EVENT2(drh, ERROR_event,
-                DBIc_ERR(imp_drh), DBIc_ERRSTR(imp_drh));
         XSRETURN(0);
     }
     XST_mIV(0, 1);
@@ -66,6 +64,7 @@ _data_sources( drh, attribs=Nullsv )
     CODE:
     {                                                           
       AV *ds = dbd_data_sources( drh );
+      PERL_UNUSED_VAR(attribs);
       ST(0) = sv_2mortal( newRV_noinc( (SV*)ds ) );
     }
                                                           
@@ -398,6 +397,7 @@ fetchrow_arrayref(sth)
     CODE:
     D_imp_sth(sth);
     AV *av = dbd_st_fetch(sth, imp_sth);
+    PERL_UNUSED_VAR(ix);
     ST(0) = (av) ? sv_2mortal(newRV((SV *)av)) : &PL_sv_undef;
 
 
@@ -409,6 +409,7 @@ fetchrow_array(sth)
     PPCODE:
     D_imp_sth(sth);
     AV *av = dbd_st_fetch(sth, imp_sth);
+    PERL_UNUSED_VAR(ix);
     if (av) {
         int num_fields = AvFILL(av)+1;
         int i;

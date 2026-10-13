@@ -19,14 +19,6 @@ extern "C" {
 #include <sqlext.h>
 #endif
 
-static int
-not_here(s)
-char *s;
-{
-    croak("%s not implemented on this architecture", s);
-    return -1;
-}
-
 static double
 constant(name, arg)
 char *name;
