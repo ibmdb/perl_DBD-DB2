@@ -360,7 +360,7 @@ execute(sth, ...)
         ) {
             char errmsg[99];
             sprintf(errmsg,"execute called with %ld bind variables when %d are needed",
-                    items-1, DBIc_NUM_PARAMS(imp_sth));
+                    (long)(items-1), (int)DBIc_NUM_PARAMS(imp_sth));
             sv_setpv(DBIc_ERRSTR(imp_sth), errmsg);
             sv_setiv(DBIc_ERR(imp_sth), (IV)-1);
             XSRETURN_UNDEF;

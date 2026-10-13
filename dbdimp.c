@@ -135,8 +135,8 @@ static void fbh_dump( imp_fbh_t *fbh,
 		int i ) {
     	PerlIO_printf( DBILOGFP, "fbh %d: '%s' %s, ",
 			i, fbh->cbuf, (fbh->nullok) ? "NULLable" : "" );
-    	PerlIO_printf( DBILOGFP, "type %d,  %ld, dsize %ld, p%d s%d\n",
-			fbh->dbtype, (long)fbh->dsize, fbh->prec, fbh->scale );
+    	PerlIO_printf( DBILOGFP, "type %d, dsize %ld, p%ld s%d\n",
+			fbh->dbtype, (long)fbh->dsize, (long)fbh->prec, (int)fbh->scale );
     	PerlIO_printf( DBILOGFP, "   out: ftype %d, indp %d, bufl %d, rlen %d\n",
 			fbh->ftype, fbh->indp, fbh->bufferSize, fbh->rlen );
 }
@@ -853,7 +853,7 @@ int dbd_db_STORE_attrib( SV *dbh,
 				return FALSE;
 		  	}
 			my_snprintf(setSchemaSQL, sizeof( setSchemaSQL ),
-				"SET CURRENT SCHEMA = '%s'", ValuePtr);
+				"SET CURRENT SCHEMA = '%s'", (char *)ValuePtr);
 			
 		  	ret = SQLExecDirect(hstmt, (SQLCHAR *)setSchemaSQL, SQL_NTS);
 			CHECK_ERROR(dbh, SQL_HANDLE_STMT, hstmt, ret, "Execute immediate failed");
@@ -1085,6 +1085,7 @@ static SQLRETURN bind_lob_column_helper( imp_fbh_t *fbh, SQLINTEGER col_num ) {
       fbh->rlen  = fbh->bufferSize = fbh->dsize = 0;
       return SQL_SUCCESS;
   }
+  return SQL_SUCCESS;
 }
 
 static int dbd_describe( SV *sth,
@@ -1104,8 +1105,8 @@ static int dbd_describe( SV *sth,
     	SQLPOINTER valuePtr = (SQLPOINTER)buffer;
     	SQLSMALLINT bufferLength = sizeof( buffer );
     	SQLSMALLINT stringLength;
-    	int app_codepage;
-    	int db_codepage;
+    	int app_codepage = 0;
+    	int db_codepage = 0;
 	
     	memset( &buffer, '\0', sizeof( buffer ) );
 	
@@ -1361,7 +1362,7 @@ static int dbd_describe( SV *sth,
 		  }
 
           if (ret == SQL_SUCCESS_WITH_INFO ) {
-              warn("BindCol error on %s: %d", fbh->cbuf);
+              warn("BindCol error on %s: SQL_SUCCESS_WITH_INFO", fbh->cbuf);
           } else {
               CHECK_ERROR(sth, SQL_HANDLE_STMT, imp_sth->phstmt, ret, "BindCol Failed");
               EOI(ret);
@@ -2371,18 +2372,18 @@ int dbd_bind_ph( SV *sth,
 	   			"  bind %s: "
 	   			"db2_param_type=%d, "
 	   			"db2_c_type=%d, "
-	   			"db2_type=%d, "
+	   			"db2_type=%ld, "
 	   			"PRECISION=%d, "
 	   			"SCALE=%d, "
-	   			"Maxlen=%d, "
+	   			"Maxlen=%ld, "
 	   			"%s\n",
 	   			name,
 	   			phs->paramType,
 	   			ctype,
-	   			sql_type,
+	   			(long)sql_type,
 	   			prec,
 	   			scale,
-	   			maxlen,
+	   			(long)maxlen,
 	   			!phs->bDescribed ? "Not described"
 				: ( phs->bDescribeOK ? "Described"
 					: "Describe failed" ) );
