@@ -135,6 +135,7 @@ struct phs_st { /* scalar placeholder */
 #define dbd_st_execute      db2_st_execute
 #define dbd_st_fetch        db2_st_fetch
 #define dbd_st_finish       db2_st_finish
+#define dbd_st_cancel       db2_st_cancel
 #define dbd_st_destroy      db2_st_destroy
 #define dbd_st_blob_read    db2_st_blob_read                     
 #define dbd_st_STORE_attrib db2_st_STORE_attrib
