@@ -44,9 +44,12 @@ void dbd_init( dbistate_t *dbistate ) {
 
 /* ------------------------Error Handling Functions--------------*/
 
+static SQLRETURN diagnoseError(SV* perlHandle, SQLSMALLINT handleType, SQLHANDLE handle, SQLRETURN rc, char* what);
+static void setErrorFromDiagRecInfo( SV* perlHandle, SQLSMALLINT handleType, SQLHANDLE handle, char* err);
+static void setErrorFromString( SV* perlHandle, SQLRETURN returnCode, char* what);
+
 static SQLRETURN diagnoseError(SV* perlHandle, SQLSMALLINT handleType, SQLHANDLE handle, SQLRETURN rc, char* what)
 {
-	D_imp_xxh(perlHandle);
 	switch(rc)
 	{
 		/*if(DBIc_TRACE_LEVEL(imp_xxh) >=3){*/
@@ -97,7 +100,7 @@ static void setErrorFromDiagRecInfo( SV* perlHandle,
                           (SQLSMALLINT)sizeof( msgBuffer ),
                           &length );
 	if(returnCode == SQL_SUCCESS || returnCode == SQL_SUCCESS_WITH_INFO) {
-		message = msgBuffer;
+		message = (char *)msgBuffer;
 	} else {
 		err = "";
 		sqlcode = returnCode;
@@ -118,7 +121,7 @@ static void setErrorFromDiagRecInfo( SV* perlHandle,
 			message = "";
 		}
 	}
-	DBIh_SET_ERR_CHAR(perlHandle, imp_xxh, err, sqlcode, message, sqlstate, Nullch);
+	DBIh_SET_ERR_CHAR(perlHandle, imp_xxh, err, sqlcode, message, (char *)sqlstate, Nullch);
 }
 
 static void setErrorFromString( SV* perlHandle, 
@@ -135,8 +138,8 @@ static void fbh_dump( imp_fbh_t *fbh,
 		int i ) {
     	PerlIO_printf( DBILOGFP, "fbh %d: '%s' %s, ",
 			i, fbh->cbuf, (fbh->nullok) ? "NULLable" : "" );
-    	PerlIO_printf( DBILOGFP, "type %d,  %ld, dsize %ld, p%d s%d\n",
-			fbh->dbtype, (long)fbh->dsize, fbh->prec, fbh->scale );
+    	PerlIO_printf( DBILOGFP, "type %d, dsize %ld, p%ld s%d\n",
+			fbh->dbtype, (long)fbh->dsize, (long)fbh->prec, (int)fbh->scale );
     	PerlIO_printf( DBILOGFP, "   out: ftype %d, indp %d, bufl %d, rlen %d\n",
 			fbh->ftype, fbh->indp, fbh->bufferSize, fbh->rlen );
 }
@@ -220,10 +223,6 @@ static int GetTrimmedSpaceLen( SQLCHAR *string, int len ) {
 #ifndef AS400
 AV* dbd_data_sources( SV *drh ) {
   	AV *ds = newAV();
-  	unsigned short dbHandle = 0;
-  	unsigned short dbCount;
-  	struct sqlca sqlca;
-  	struct sqledinfo *dbBuffer;
   	const int prefixLen = 8;  /* length of 'dbi:DB2:' */
   	char buffer[ 8 + SQL_MAX_DSN_LENGTH + 1 ] = "dbi:DB2:";
 	char description[255];
@@ -243,10 +242,10 @@ AV* dbd_data_sources( SV *drh ) {
     while ( 1 ) {
       ret = SQLDataSources( henv,
                                    SQL_FETCH_NEXT,
-                                   pAlias,
+                                   (SQLCHAR *)pAlias,
                                    SQL_MAX_DSN_LENGTH + 1,
                                    &cbLen,
-                                   description,
+                                   (SQLCHAR *)description,
                                    255,
                                    &desl
                                  );
@@ -277,7 +276,7 @@ static int dbd_db_connect( SV *dbh,
 
 	SQLRETURN ret;
 	STRLEN length;
-	SQLCHAR *new_dsn = NULL;
+	char *new_dsn = NULL;
 	int dsn_length;
 	imp_dbh->hdbc = SQL_NULL_HDBC;
 	ret = SQLAllocHandle(SQL_HANDLE_DBC, imp_drh->henv,
@@ -347,14 +346,14 @@ static int dbd_db_connect( SV *dbh,
       	}
 	
       	/* If the string contains a =, use SQLDriverConnect */
-      	if (strstr (dbname, "=") != NULL) {
-	  	if (uid != NULL && strlen(uid) > 0) {
-	      		if (strstr(dbname, ";uid=") == NULL && strstr(dbname, ";UID=") == NULL) {
-		  		dsn_length = strlen(dbname) + strlen(uid) + strlen(pwd) + sizeof(";UID=;PWD=;")+1;
+      	if (strstr ((char *)dbname, "=") != NULL) {
+	  	if (uid != NULL && strlen((char *)uid) > 0) {
+	      		if (strstr((char *)dbname, ";uid=") == NULL && strstr((char *)dbname, ";UID=") == NULL) {
+		  		dsn_length = strlen((char *)dbname) + strlen((char *)uid) + strlen((char *)pwd) + sizeof(";UID=;PWD=;")+1;
 		  		new_dsn = (char *)malloc(sizeof(char)*dsn_length);
 				CHECK_ERROR(dbh, 0, SQL_NULL_HANDLE, ret, "Unable to allocate DSN String");
 				sprintf(new_dsn, "%s;UID=%s;PWD=%s;",dbname,uid,pwd);
-		  		dbname = new_dsn;
+		  		dbname = (SQLCHAR *)new_dsn;
 	      		}
 	  	}
 	  	ret = SQLDriverConnect(imp_dbh->hdbc,(SQLHWND)NULL,dbname,SQL_NTS,NULL,0,NULL,SQL_DRIVER_NOPROMPT);
@@ -853,7 +852,7 @@ int dbd_db_STORE_attrib( SV *dbh,
 				return FALSE;
 		  	}
 			my_snprintf(setSchemaSQL, sizeof( setSchemaSQL ),
-				"SET CURRENT SCHEMA = '%s'", ValuePtr);
+				"SET CURRENT SCHEMA = '%s'", (char *)ValuePtr);
 			
 		  	ret = SQLExecDirect(hstmt, (SQLCHAR *)setSchemaSQL, SQL_NTS);
 			CHECK_ERROR(dbh, SQL_HANDLE_STMT, hstmt, ret, "Execute immediate failed");
@@ -1085,6 +1084,7 @@ static SQLRETURN bind_lob_column_helper( imp_fbh_t *fbh, SQLINTEGER col_num ) {
       fbh->rlen  = fbh->bufferSize = fbh->dsize = 0;
       return SQL_SUCCESS;
   }
+  return SQL_SUCCESS;
 }
 
 static int dbd_describe( SV *sth,
@@ -1092,20 +1092,18 @@ static int dbd_describe( SV *sth,
 
         D_imp_dbh_from_sth;
     	SQLCHAR  *cbuf_ptr;
-    	SQLINTEGER t_cbufl=0;
     	short num_fields;
     	SQLINTEGER i;
     	SQLRETURN ret;
     	imp_fbh_t *fbh;
     	SQLINTEGER bufferSizeRequired;
 	
-    	SV *retsv = &PL_sv_undef;
     	char buffer[256];
     	SQLPOINTER valuePtr = (SQLPOINTER)buffer;
     	SQLSMALLINT bufferLength = sizeof( buffer );
     	SQLSMALLINT stringLength;
-    	int app_codepage;
-    	int db_codepage;
+    	int app_codepage = 0;
+    	int db_codepage = 0;
 	
     	memset( &buffer, '\0', sizeof( buffer ) );
 	
@@ -1286,7 +1284,6 @@ static int dbd_describe( SV *sth,
 
                 if( ret == SQL_SUCCESS) {
                   db_codepage = *(int *)valuePtr;
-                  retsv = sv_2mortal( newSViv( (I32)( *(SQLINTEGER*)valuePtr) ) );
                 }
 
                 ret = SQLGetInfo( imp_dbh->hdbc,
@@ -1319,7 +1316,6 @@ static int dbd_describe( SV *sth,
 
                 if( ret == SQL_SUCCESS) {
                   app_codepage = *(int *)valuePtr; 
-                  retsv = sv_2mortal( newSViv( (I32)( *(SQLINTEGER*)valuePtr) ) );
                 }
 					
                 if ( app_codepage != db_codepage) {
@@ -1361,7 +1357,7 @@ static int dbd_describe( SV *sth,
 		  }
 
           if (ret == SQL_SUCCESS_WITH_INFO ) {
-              warn("BindCol error on %s: %d", fbh->cbuf);
+              warn("BindCol error on %s: SQL_SUCCESS_WITH_INFO", fbh->cbuf);
           } else {
               CHECK_ERROR(sth, SQL_HANDLE_STMT, imp_sth->phstmt, ret, "BindCol Failed");
               EOI(ret);
@@ -1379,7 +1375,7 @@ static void dbd_preparse( imp_sth_t *imp_sth,
 	SQLCHAR  *src, *start, *dest;
 	phs_t phs_tpl;
 	SV *phs_sv;
-	int idx=0, style=0 ;
+	int idx=0;
 	
 	float num_placeholders = 0;
 	int num_bytes_required = 0, num_digits = 0;
@@ -1494,8 +1490,8 @@ int dbd_st_table_info( SV *sth,
 
       	D_imp_dbh_from_sth;
       	SQLRETURN ret;
-      	const SQLCHAR *pszSchema = "";
-      	const SQLCHAR *pszTable = "";
+      	const SQLCHAR *pszSchema = (const SQLCHAR *)"";
+      	const SQLCHAR *pszTable = (const SQLCHAR *)"";
 	SQLCHAR *pszTableType = NULL;
       	SQLINTEGER cbSchemaLength = 1;
       	SQLINTEGER cbTableLength = 1;
@@ -1599,11 +1595,11 @@ int dbd_st_primary_key_info( SV *sth,
      	}
 	
      	ret = SQLPrimaryKeys( imp_sth->phstmt,
-			pszCatalog,
+			(SQLCHAR *)pszCatalog,
 			cbCatalogLength,
-			pszSchema,
+			(SQLCHAR *)pszSchema,
 			cbSchemaLength,
-			pszTable,
+			(SQLCHAR *)pszTable,
 			cbTableLength );
 	
 	CHECK_ERROR(sth, SQL_HANDLE_STMT, imp_sth->phstmt, ret, "SQLPrimaryKeys Failed");
@@ -1676,17 +1672,17 @@ int dbd_st_foreign_key_info( SV *sth,
      	}
 	
      	ret = SQLForeignKeys( imp_sth->phstmt,
-			pkCatalog,
+			(SQLCHAR *)pkCatalog,
 			cbpkCatalogLength,
-			pkSchema,
+			(SQLCHAR *)pkSchema,
 			cbpkSchemaLength,
-			pkTable,
+			(SQLCHAR *)pkTable,
 			cbpkTableLength,
-			fkCatalog,
+			(SQLCHAR *)fkCatalog,
 			cbfkCatalogLength,
-			fkSchema,
+			(SQLCHAR *)fkSchema,
 			cbfkSchemaLength,
-			fkTable,
+			(SQLCHAR *)fkTable,
 			cbfkTableLength );
 	
 	CHECK_ERROR(sth, SQL_HANDLE_STMT, imp_sth->phstmt, ret, "SQLForeignKeys Failed");
@@ -1748,13 +1744,13 @@ int dbd_st_column_info( SV        *sth,
      	cbColumnLength = strlen( pszColumn );
 	
      	ret = SQLColumns( imp_sth->phstmt,
-    			pszCatalog,
+    			(SQLCHAR *)pszCatalog,
    			cbCatalogLength,
-   			pszSchema,
+   			(SQLCHAR *)pszSchema,
    			cbSchemaLength,
-   			pszTable,
+   			(SQLCHAR *)pszTable,
    			cbTableLength,
-   			pszColumn,
+   			(SQLCHAR *)pszColumn,
    			cbColumnLength );
 	CHECK_ERROR(sth, SQL_HANDLE_STMT, imp_sth->phstmt, ret, "SQLColumns Failed");
      	if( ret != SQL_SUCCESS ) {
@@ -2175,7 +2171,6 @@ int dbd_bind_ph( SV *sth,
 		int is_inout,
 		IV maxlen ) {
 
-    	D_imp_dbh_from_sth;
     	SV **svp;
     	STRLEN name_len;
     	SQLCHAR  *name;
@@ -2371,18 +2366,18 @@ int dbd_bind_ph( SV *sth,
 	   			"  bind %s: "
 	   			"db2_param_type=%d, "
 	   			"db2_c_type=%d, "
-	   			"db2_type=%d, "
+	   			"db2_type=%ld, "
 	   			"PRECISION=%d, "
 	   			"SCALE=%d, "
-	   			"Maxlen=%d, "
+	   			"Maxlen=%ld, "
 	   			"%s\n",
 	   			name,
 	   			phs->paramType,
 	   			ctype,
-	   			sql_type,
+	   			(long)sql_type,
 	   			prec,
 	   			scale,
-	   			maxlen,
+	   			(long)maxlen,
 	   			!phs->bDescribed ? "Not described"
 				: ( phs->bDescribeOK ? "Described"
 					: "Describe failed" ) );
@@ -2736,7 +2731,6 @@ AV *dbd_st_fetch( SV *sth,
     	SQLINTEGER ChopBlanks;
         SQLINTEGER bufferSizeRequired;
     	SQLINTEGER i;
-        SQLINTEGER retl = 0;
     	SQLRETURN ret=-3;
     	AV *av;
     	imp_fbh_t *fbh;
@@ -2939,7 +2933,6 @@ int dbd_st_blob_read( SV *sth,
 		SV *destrv,
 		long destoffset ) {
     
-	D_imp_dbh_from_sth;
     	SQLINTEGER retl;
     	SV *bufsv;
     	SQLRETURN rtval;
@@ -3004,7 +2997,6 @@ int dbd_st_rows( SV *sth,
 int dbd_st_cancel( SV *sth,
 		imp_sth_t *imp_sth ) {
     
-	D_imp_dbh_from_sth;
     	SQLRETURN ret;
 	
     	if (DBIc_ACTIVE(imp_sth) ) {
@@ -3023,7 +3015,6 @@ int dbd_st_cancel( SV *sth,
 int dbd_st_finish( SV *sth,
 		imp_sth_t *imp_sth ) {
 
-	D_imp_dbh_from_sth;
     	SQLRETURN ret;
     	/* Cancel further fetches from this cursor.  We don't        */
     	/* close the cursor (SQLFreeHandle) 'til DESTROY (dbd_st_destroy).*/

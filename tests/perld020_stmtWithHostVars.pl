@@ -23,6 +23,7 @@ check_error("CONNECT");
 $stmt = "SELECT empno, lastname, birthdate into :empno, :lastname, :birthdate FROM employee WHERE birthdate = {d'1956-12-18'}";
 
 $rv = $dbh->do($stmt);
-check_error("DO", -312);
+# Newer DB2 servers reject the INTO clause with SQL0109N instead of SQL0312N
+check_error("DO", ($DBI::err == -109) ? -109 : -312);
 
 fvt_end_testcase($testcase, $success);
